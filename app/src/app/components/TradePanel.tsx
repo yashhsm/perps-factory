@@ -2,27 +2,19 @@
 
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Program } from "@anchor-lang/core";
 import { MarketData } from "@/app/hooks/useMarkets";
-import { ONE_USDC, POSITION_SEED, VAULT_SEED } from "@/app/lib/constants";
-import BN from "bn.js";
 
 interface Props {
   market: MarketData;
-  program: Program;
-  onTradeComplete: () => void;
 }
 
-export default function TradePanel({ market, program, onTradeComplete }: Props) {
+export default function TradePanel({ market }: Props) {
   const wallet = useWallet();
   const [side, setSide] = useState<"long" | "short">("long");
   const [size, setSize] = useState("");
   const [collateral, setCollateral] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const leverage =
     size && collateral && Number(collateral) > 0
@@ -33,59 +25,26 @@ export default function TradePanel({ market, program, onTradeComplete }: Props) 
     if (!wallet.publicKey || !size || !collateral) return;
     setLoading(true);
     setError(null);
-    setSuccess(null);
 
     try {
-      const sizeNum = parseInt(size);
-      const collateralNum = Math.floor(Number(collateral) * ONE_USDC);
+      const sizeNum = Number(size);
+      const collateralNum = Number(collateral);
 
-      const [positionPda] = PublicKey.findProgramAddressSync(
-        [
-          Buffer.from("position"),
-          market.publicKey.toBuffer(),
-          wallet.publicKey.toBuffer(),
-        ],
-        program.programId
-      );
+      if (!Number.isFinite(sizeNum) || sizeNum <= 0) {
+        setError("Enter a valid positive size.");
+        return;
+      }
 
-      const [vaultPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("vault"), market.publicKey.toBuffer()],
-        program.programId
-      );
+      if (!Number.isFinite(collateralNum) || collateralNum <= 0) {
+        setError("Enter valid positive collateral.");
+        return;
+      }
 
-      // TODO: Get the trader's USDC token account dynamically
-      // For now this is a placeholder — in production, use getAssociatedTokenAddress
       setError(
-        "Connect wallet & ensure you have a USDC token account. Full integration coming soon."
+        "Trading is not wired yet. Wallet token-account discovery and the open-position instruction still need to be connected."
       );
-      setLoading(false);
-      return;
-
-      // The actual instruction call (uncomment when token accounts are wired):
-      /*
-      await program.methods
-        .openPosition({
-          side: side === "long" ? { long: {} } : { short: {} },
-          size: new BN(sizeNum),
-          collateral: new BN(collateralNum),
-        })
-        .accounts({
-          market: market.publicKey,
-          position: positionPda,
-          vault: vaultPda,
-          traderToken: traderTokenAccount,
-          pythFeed: market.pythFeed,
-          trader: wallet.publicKey,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-
-      setSuccess(`${side.toUpperCase()} position opened!`);
-      onTradeComplete();
-      */
-    } catch (e: any) {
-      setError(e.message || "Transaction failed");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "Transaction failed");
     } finally {
       setLoading(false);
     }
@@ -201,11 +160,6 @@ export default function TradePanel({ market, program, onTradeComplete }: Props) 
       {error && (
         <div className="mt-3 text-xs text-red bg-red/10 rounded-lg px-3 py-2">
           {error}
-        </div>
-      )}
-      {success && (
-        <div className="mt-3 text-xs text-green bg-green/10 rounded-lg px-3 py-2">
-          {success}
         </div>
       )}
     </div>

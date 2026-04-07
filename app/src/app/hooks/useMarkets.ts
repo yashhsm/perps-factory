@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 import { Program } from "@anchor-lang/core";
-import { PRICE_PRECISION, ONE_USDC } from "@/app/lib/constants";
+import { PRICE_PRECISION } from "@/app/lib/constants";
+import { type PerpsFactoryIdl } from "@/app/lib/idl";
 
 export interface MarketData {
   publicKey: PublicKey;
@@ -23,38 +23,66 @@ export interface MarketData {
   active: boolean;
 }
 
-export function useMarkets(program: Program | null) {
+interface MarketAccountState {
+  index: { toNumber(): number };
+  pythFeed: PublicKey;
+  creator: PublicKey;
+  ammBase: { toNumber(): number };
+  ammQuote: { toNumber(): number };
+  maxLeverage: number;
+  tradingFeeBps: number;
+  maintenanceMarginBps: number;
+  openInterestLong: { toNumber(): number };
+  openInterestShort: { toNumber(): number };
+  lpSharesTotal: { toNumber(): number };
+  active: boolean;
+}
+
+interface MarketAccountEntry {
+  publicKey: PublicKey;
+  account: MarketAccountState;
+}
+
+interface MarketAccountClient {
+  all(): Promise<MarketAccountEntry[]>;
+}
+
+export function useMarkets(program: Program<PerpsFactoryIdl>) {
   const [markets, setMarkets] = useState<MarketData[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchMarkets = useCallback(async () => {
-    if (!program) return;
     setLoading(true);
     try {
-      const allMarkets = await (program.account as any).market.all();
-      const parsed: MarketData[] = allMarkets.map((m: any) => {
-        const ammBase = m.account.ammBase.toNumber();
-        const ammQuote = m.account.ammQuote.toNumber();
-        const markPrice =
-          ammBase > 0 ? (ammQuote * PRICE_PRECISION) / ammBase : 0;
+      const marketAccount = program.account as unknown as {
+        market: MarketAccountClient;
+      };
+      const allMarkets = await marketAccount.market.all();
+      const parsed: MarketData[] = allMarkets.map(
+        ({ publicKey, account }: MarketAccountEntry) => {
+          const ammBase = account.ammBase.toNumber();
+          const ammQuote = account.ammQuote.toNumber();
+          const markPrice =
+            ammBase > 0 ? (ammQuote * PRICE_PRECISION) / ammBase : 0;
 
-        return {
-          publicKey: m.publicKey,
-          index: m.account.index.toNumber(),
-          pythFeed: m.account.pythFeed,
-          creator: m.account.creator,
-          ammBase,
-          ammQuote,
-          markPrice: markPrice / PRICE_PRECISION,
-          maxLeverage: m.account.maxLeverage,
-          tradingFeeBps: m.account.tradingFeeBps,
-          maintenanceMarginBps: m.account.maintenanceMarginBps,
-          openInterestLong: m.account.openInterestLong.toNumber(),
-          openInterestShort: m.account.openInterestShort.toNumber(),
-          lpSharesTotal: m.account.lpSharesTotal.toNumber(),
-          active: m.account.active,
-        };
-      });
+          return {
+            publicKey,
+            index: account.index.toNumber(),
+            pythFeed: account.pythFeed,
+            creator: account.creator,
+            ammBase,
+            ammQuote,
+            markPrice: markPrice / PRICE_PRECISION,
+            maxLeverage: account.maxLeverage,
+            tradingFeeBps: account.tradingFeeBps,
+            maintenanceMarginBps: account.maintenanceMarginBps,
+            openInterestLong: account.openInterestLong.toNumber(),
+            openInterestShort: account.openInterestShort.toNumber(),
+            lpSharesTotal: account.lpSharesTotal.toNumber(),
+            active: account.active,
+          };
+        }
+      );
 
       parsed.sort((a, b) => a.index - b.index);
       setMarkets(parsed);
@@ -66,7 +94,7 @@ export function useMarkets(program: Program | null) {
   }, [program]);
 
   useEffect(() => {
-    fetchMarkets();
+    void fetchMarkets();
   }, [fetchMarkets]);
 
   return { markets, loading, refresh: fetchMarkets };

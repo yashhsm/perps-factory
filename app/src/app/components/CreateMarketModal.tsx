@@ -2,24 +2,14 @@
 
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram, Keypair } from "@solana/web3.js";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { Program } from "@anchor-lang/core";
-import BN from "bn.js";
 
 interface Props {
-  program: Program;
-  protocolPda: PublicKey;
   marketCount: number;
-  onCreated: () => void;
   onClose: () => void;
 }
 
 export default function CreateMarketModal({
-  program,
-  protocolPda,
   marketCount,
-  onCreated,
   onClose,
 }: Props) {
   const wallet = useWallet();
@@ -39,33 +29,24 @@ export default function CreateMarketModal({
     try {
       const price = Number(initialPrice);
       const depth = Number(initialDepth);
-      const ammBase = depth;
-      const ammQuote = Math.floor(depth * price * 1_000_000); // USDC with 6 decimals
 
-      const indexBuf = Buffer.alloc(8);
-      indexBuf.writeBigUInt64LE(BigInt(marketCount));
+      if (!Number.isFinite(price) || price <= 0) {
+        setError("Enter a valid positive initial price.");
+        return;
+      }
 
-      const [marketPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("market"), indexBuf],
-        program.programId
-      );
+      if (!Number.isFinite(depth) || depth <= 0) {
+        setError("Enter a valid positive AMM depth.");
+        return;
+      }
 
-      const [vaultPda] = PublicKey.findProgramAddressSync(
-        [Buffer.from("vault"), marketPda.toBuffer()],
-        program.programId
-      );
-
-      // Use a random keypair as a fake Pyth feed for devnet
-      const pythFeed = Keypair.generate();
-
-      // TODO: Use real USDC mint. For devnet testing, you'll need a test mint.
       setError(
-        "Market creation requires a collateral mint. Deploy on devnet with a test USDC mint first."
+        "Market creation is not wired yet. A collateral mint and on-chain create-market instruction still need to be hooked up."
       );
-      setLoading(false);
-      return;
-    } catch (e: any) {
-      setError(e.message || "Failed to create market");
+    } catch (error: unknown) {
+      setError(
+        error instanceof Error ? error.message : "Failed to create market"
+      );
     } finally {
       setLoading(false);
     }

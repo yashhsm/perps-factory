@@ -7,12 +7,12 @@ import MarketList from "@/app/components/MarketList";
 import MarketDetail from "@/app/components/MarketDetail";
 import TradePanel from "@/app/components/TradePanel";
 import CreateMarketModal from "@/app/components/CreateMarketModal";
-import { useProgram, useProtocolPda } from "@/app/hooks/useProgram";
+import { useProgram } from "@/app/hooks/useProgram";
 import { useMarkets } from "@/app/hooks/useMarkets";
 
 export default function Home() {
   const { program } = useProgram();
-  const { markets, loading, refresh } = useMarkets(program);
+  const { markets, loading } = useMarkets(program);
   const [selectedMarketIndex, setSelectedMarketIndex] = useState<number | null>(
     null
   );
@@ -22,10 +22,6 @@ export default function Home() {
   const selectedMarket = markets.find(
     (m) => m.index === selectedMarketIndex
   );
-
-  const protocolPda = program
-    ? useProtocolPda(program.programId)
-    : null;
 
   return (
     <div className="flex flex-col h-screen">
@@ -40,7 +36,8 @@ export default function Home() {
             </span>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="text-xs bg-accent text-white px-3 py-1 rounded-md hover:bg-accent-hover transition-colors"
+              disabled={!wallet.publicKey}
+              className="text-xs bg-accent text-white px-3 py-1 rounded-md hover:bg-accent-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               + New
             </button>
@@ -70,13 +67,7 @@ export default function Home() {
 
                 {/* Trade panel — 1 col */}
                 <div>
-                  {program && (
-                    <TradePanel
-                      market={selectedMarket}
-                      program={program}
-                      onTradeComplete={refresh}
-                    />
-                  )}
+                  <TradePanel market={selectedMarket} />
                 </div>
               </div>
             </div>
@@ -113,15 +104,9 @@ export default function Home() {
       </main>
 
       {/* Create Market Modal */}
-      {showCreateModal && program && protocolPda && (
+      {showCreateModal && (
         <CreateMarketModal
-          program={program}
-          protocolPda={protocolPda}
           marketCount={markets.length}
-          onCreated={() => {
-            setShowCreateModal(false);
-            refresh();
-          }}
           onClose={() => setShowCreateModal(false)}
         />
       )}
