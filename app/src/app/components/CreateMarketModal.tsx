@@ -2,14 +2,28 @@
 
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey, SystemProgram, Keypair } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { BN } from "@anchor-lang/core";
+import idl from "@/app/lib/idl";
+import {
+  PROTOCOL_SEED,
+  MARKET_SEED,
+  VAULT_SEED,
+  USDC_MINT,
+} from "@/app/lib/constants";
 
 interface Props {
+  program: { methods: any };
   marketCount: number;
+  onCreated: () => void;
   onClose: () => void;
 }
 
 export default function CreateMarketModal({
+  program,
   marketCount,
+  onCreated,
   onClose,
 }: Props) {
   const wallet = useWallet();
@@ -20,11 +34,13 @@ export default function CreateMarketModal({
   const [initialDepth, setInitialDepth] = useState("1000000");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const handleCreate = async () => {
     if (!wallet.publicKey) return;
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const price = Number(initialPrice);
@@ -32,21 +48,79 @@ export default function CreateMarketModal({
 
       if (!Number.isFinite(price) || price <= 0) {
         setError("Enter a valid positive initial price.");
+        setLoading(false);
         return;
       }
-
       if (!Number.isFinite(depth) || depth <= 0) {
         setError("Enter a valid positive AMM depth.");
+        setLoading(false);
         return;
       }
 
-      setError(
-        "Market creation is not wired yet. A collateral mint and on-chain create-market instruction still need to be hooked up."
+      const ammBase = new BN(depth);
+      // quote = depth * price * 1e6 (USDC 6 decimals)
+      const ammQuote = new BN(Math.floor(depth * price * 1_000_000));
+
+      const programId = new PublicKey(idl.address);
+
+      // Derive protocol PDA
+      const [protocolPda] = PublicKey.findProgramAddressSync(
+        [PROTOCOL_SEED],
+        programId
       );
-    } catch (error: unknown) {
-      setError(
-        error instanceof Error ? error.message : "Failed to create market"
+
+      // Derive market PDA using current market_count
+      const indexBuf = Buffer.alloc(8);
+      indexBuf.writeBigUInt64LE(BigInt(marketCount));
+      const [marketPda] = PublicKey.findProgramAddressSync(
+        [MARKET_SEED, indexBuf],
+        programId
       );
+
+      // Derive vault PDA
+      const [vaultPda] = PublicKey.findProgramAddressSync(
+        [VAULT_SEED, marketPda.toBuffer()],
+        programId
+      );
+
+      // Use a random keypair as Pyth feed placeholder on devnet
+      // In production, this would be a real Pyth price account
+      const pythFeed = Keypair.generate();
+
+      const tx = await program.methods
+        .createMarket({
+          maxLeverage: Number(maxLeverage),
+          tradingFeeBps: Number(tradingFee),
+          maintenanceMarginBps: Number(maintenanceMargin),
+          initialAmmBase: ammBase,
+          initialAmmQuote: ammQuote,
+        })
+        .accounts({
+          protocol: protocolPda,
+          market: marketPda,
+          vault: vaultPda,
+          pythFeed: pythFeed.publicKey,
+          collateralMint: USDC_MINT,
+          creator: wallet.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      setSuccess(`Market created! tx: ${tx.slice(0, 16)}...`);
+      setTimeout(() => {
+        onCreated();
+      }, 2000);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Failed to create market";
+      // Provide user-friendly hints for common errors
+      if (msg.includes("insufficient funds") || msg.includes("0x1")) {
+        setError("Insufficient SOL for transaction fees. Airdrop devnet SOL first.");
+      } else if (msg.includes("already in use")) {
+        setError("Protocol not initialized yet, or market index collision. Try refreshing.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -157,6 +231,11 @@ export default function CreateMarketModal({
         {error && (
           <div className="mt-3 text-xs text-red bg-red/10 rounded-lg px-3 py-2">
             {error}
+          </div>
+        )}
+        {success && (
+          <div className="mt-3 text-xs text-green bg-green/10 rounded-lg px-3 py-2">
+            {success}
           </div>
         )}
 

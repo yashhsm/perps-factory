@@ -10,6 +10,8 @@ export interface MarketData {
   publicKey: PublicKey;
   index: number;
   pythFeed: PublicKey;
+  collateralMint: PublicKey;
+  vault: PublicKey;
   creator: PublicKey;
   ammBase: number;
   ammQuote: number;
@@ -26,6 +28,8 @@ export interface MarketData {
 interface MarketAccountState {
   index: { toNumber(): number };
   pythFeed: PublicKey;
+  collateralMint: PublicKey;
+  vault: PublicKey;
   creator: PublicKey;
   ammBase: { toNumber(): number };
   ammQuote: { toNumber(): number };
@@ -69,6 +73,8 @@ export function useMarkets(program: Program<PerpsFactoryIdl>) {
             publicKey,
             index: account.index.toNumber(),
             pythFeed: account.pythFeed,
+            collateralMint: account.collateralMint,
+            vault: account.vault,
             creator: account.creator,
             ammBase,
             ammQuote,

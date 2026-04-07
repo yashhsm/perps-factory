@@ -1,20 +1,28 @@
 "use client";
 
 import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
+import { useWallet, useConnection } from "@solana/wallet-adapter-react";
+import { PublicKey, SystemProgram } from "@solana/web3.js";
+import { TOKEN_PROGRAM_ID, getAssociatedTokenAddress } from "@solana/spl-token";
+import { BN } from "@anchor-lang/core";
 import { MarketData } from "@/app/hooks/useMarkets";
+import { POSITION_SEED, ONE_USDC } from "@/app/lib/constants";
 
 interface Props {
   market: MarketData;
+  program: { methods: any; programId: PublicKey };
+  onTradeComplete: () => void;
 }
 
-export default function TradePanel({ market }: Props) {
+export default function TradePanel({ market, program, onTradeComplete }: Props) {
   const wallet = useWallet();
+  const { connection } = useConnection();
   const [side, setSide] = useState<"long" | "short">("long");
   const [size, setSize] = useState("");
   const [collateral, setCollateral] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
 
   const leverage =
     size && collateral && Number(collateral) > 0
@@ -25,6 +33,7 @@ export default function TradePanel({ market }: Props) {
     if (!wallet.publicKey || !size || !collateral) return;
     setLoading(true);
     setError(null);
+    setSuccess(null);
 
     try {
       const sizeNum = Number(size);
@@ -32,19 +41,71 @@ export default function TradePanel({ market }: Props) {
 
       if (!Number.isFinite(sizeNum) || sizeNum <= 0) {
         setError("Enter a valid positive size.");
+        setLoading(false);
         return;
       }
-
       if (!Number.isFinite(collateralNum) || collateralNum <= 0) {
         setError("Enter valid positive collateral.");
+        setLoading(false);
         return;
       }
 
-      setError(
-        "Trading is not wired yet. Wallet token-account discovery and the open-position instruction still need to be connected."
+      const sizeRaw = new BN(Math.floor(sizeNum));
+      const collateralRaw = new BN(Math.floor(collateralNum * ONE_USDC));
+
+      // Derive position PDA
+      const [positionPda] = PublicKey.findProgramAddressSync(
+        [POSITION_SEED, market.publicKey.toBuffer(), wallet.publicKey.toBuffer()],
+        program.programId
       );
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "Transaction failed");
+
+      // Get trader's USDC token account (ATA)
+      const traderToken = await getAssociatedTokenAddress(
+        market.collateralMint,
+        wallet.publicKey
+      );
+
+      // Check if the token account exists
+      const tokenInfo = await connection.getAccountInfo(traderToken);
+      if (!tokenInfo) {
+        setError(
+          `No USDC token account found. Send USDC (mint: ${market.collateralMint.toBase58().slice(0, 8)}...) to your wallet first.`
+        );
+        setLoading(false);
+        return;
+      }
+
+      const tx = await program.methods
+        .openPosition({
+          side: side === "long" ? { long: {} } : { short: {} },
+          size: sizeRaw,
+          collateral: collateralRaw,
+        })
+        .accounts({
+          market: market.publicKey,
+          position: positionPda,
+          vault: market.vault,
+          traderToken: traderToken,
+          pythFeed: market.pythFeed,
+          trader: wallet.publicKey,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc();
+
+      setSuccess(`${side.toUpperCase()} opened! tx: ${tx.slice(0, 16)}...`);
+      setTimeout(() => {
+        onTradeComplete();
+      }, 2000);
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : "Transaction failed";
+      if (msg.includes("insufficient funds") || msg.includes("0x1")) {
+        setError("Insufficient SOL for fees or USDC for collateral.");
+      } else if (msg.includes("already in use")) {
+        setError("You already have an open position in this market. Close it first.");
+      } else {
+        setError(msg);
+      }
     } finally {
       setLoading(false);
     }
@@ -114,9 +175,7 @@ export default function TradePanel({ market }: Props) {
           Mark: ${market.markPrice.toLocaleString(undefined, { maximumFractionDigits: 2 })}
         </span>
         <span
-          className={
-            leverage > market.maxLeverage ? "text-red font-semibold" : ""
-          }
+          className={leverage > market.maxLeverage ? "text-red font-semibold" : ""}
         >
           Leverage: {leverage.toFixed(1)}x / {market.maxLeverage}x
         </span>
@@ -160,6 +219,11 @@ export default function TradePanel({ market }: Props) {
       {error && (
         <div className="mt-3 text-xs text-red bg-red/10 rounded-lg px-3 py-2">
           {error}
+        </div>
+      )}
+      {success && (
+        <div className="mt-3 text-xs text-green bg-green/10 rounded-lg px-3 py-2">
+          {success}
         </div>
       )}
     </div>
