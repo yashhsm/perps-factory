@@ -9,6 +9,9 @@ skip-lint = false
 [programs.localnet]
 perps_factory = "FtQtY9QpFAUFqTVK1266cm5xHkcNR5AYQhcGAdM8wzCC"
 
+[programs.devnet]
+perps_factory = "FtQtY9QpFAUFqTVK1266cm5xHkcNR5AYQhcGAdM8wzCC"
+
 [registry]
 url = "https://api.apr.dev"
 
