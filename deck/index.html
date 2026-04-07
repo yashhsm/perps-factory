@@ -21,6 +21,7 @@
     --green: #22c55e;
     --red: #ef4444;
     --amber: #f59e0b;
+    --hl-green: #5dffa2;
   }
 
   body {
@@ -262,7 +263,6 @@
     margin-top: 40px;
   }
 
-  /* Navigation hint */
   .nav-hint {
     position: fixed;
     bottom: 40px;
@@ -272,7 +272,6 @@
     font-family: 'JetBrains Mono', monospace;
   }
 
-  /* Animations */
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(30px); }
     to { opacity: 1; transform: translateY(0); }
@@ -285,6 +284,20 @@
   .slide.active > *:nth-child(2) { animation-delay: 0.1s; }
   .slide.active > *:nth-child(3) { animation-delay: 0.2s; }
   .slide.active > *:nth-child(4) { animation-delay: 0.3s; }
+
+  .vs-badge {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+    vertical-align: middle;
+  }
+  .vs-win { background: rgba(34, 197, 94, 0.15); color: var(--green); }
+  .vs-neutral { background: rgba(136, 136, 160, 0.15); color: var(--muted); }
+  .vs-lose { background: rgba(239, 68, 68, 0.15); color: var(--red); }
 </style>
 </head>
 <body>
@@ -292,79 +305,177 @@
 <!-- SLIDE 1: Title -->
 <div class="slide active" id="s1">
   <div class="logo-bar">perps.factory</div>
-  <h1>Permissionless<br>Perps on <span class="highlight">Solana</span></h1>
+  <h1>HIP-3 for <span class="highlight">Solana</span></h1>
   <p class="subtitle">
-    Anyone can create a perpetual futures market for any asset.
-    No governance. No whitelisting. Just deploy and trade.
+    Builder-deployed perpetual futures on Solana. No staking requirements.
+    Trustless oracles. AMM-bootstrapped liquidity from block one.
   </p>
   <div class="mt-8" style="display: flex; gap: 12px;">
     <span class="tag">Built on Solana</span>
-    <span class="tag">AMM-Bootstrapped</span>
-    <span class="tag">Fully On-Chain</span>
+    <span class="tag">Inspired by Hyperliquid HIP-3</span>
+    <span class="tag">Live on Devnet</span>
   </div>
-  <div class="slide-number">01 / 12</div>
+  <div class="slide-number">01 / 14</div>
 </div>
 
-<!-- SLIDE 2: Problem -->
+<!-- SLIDE 2: Context — HIP-3 Validated the Thesis -->
 <div class="slide" id="s2">
   <div class="logo-bar">perps.factory</div>
+  <span class="tag">THE THESIS</span>
+  <h2>Hyperliquid proved<br><span class="highlight">permissionless perps work</span></h2>
+  <div class="grid-2">
+    <div>
+      <p class="subtitle" style="font-size: 20px; max-width: 100%;">
+        HIP-3 launched builder-deployed perps on Hyperliquid. Builders can now create
+        perp markets for any asset with their own oracle, leverage, and fee settings.
+      </p>
+      <p class="subtitle mt-8" style="font-size: 20px; max-width: 100%;">
+        The model works. But HIP-3 has friction:
+      </p>
+      <ul class="bullet-list mt-4" style="font-size: 18px;">
+        <li><span class="red">500K HYPE</span> staking (~$1M+) to deploy</li>
+        <li>Deployer must <span class="red">run oracle infra</span> (push prices every 3s)</li>
+        <li>Markets launch with <span class="red">zero liquidity</span></li>
+        <li>Locked to Hyperliquid's L1 only</li>
+      </ul>
+    </div>
+    <div>
+      <div class="stat-card" style="margin-bottom: 24px; border-color: var(--hl-green);">
+        <div class="stat-value" style="color: var(--hl-green);">HIP-3</div>
+        <div class="stat-label">Hyperliquid's model</div>
+      </div>
+      <div class="card">
+        <h3>What HIP-3 got right</h3>
+        <p>Permissionless market creation. Builder economics (50% fee share). Independent margining per DEX. Full CLOB integration. This is the future of perps.</p>
+      </div>
+      <div class="card mt-4">
+        <h3>What we improve</h3>
+        <p>Zero cost to deploy. Trustless Pyth oracles (no infra). Instant AMM depth. On Solana with 10x the DeFi composability.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">02 / 14</div>
+</div>
+
+<!-- SLIDE 3: Problem -->
+<div class="slide" id="s3">
+  <div class="logo-bar">perps.factory</div>
   <span class="tag">THE PROBLEM</span>
-  <h2>Perps markets are<br><span class="red">gated and slow</span></h2>
+  <h2>Solana has no<br><span class="red">permissionless perps</span></h2>
   <div class="grid-2">
     <div class="card">
       <h3>Listing Bottleneck</h3>
-      <p>New assets wait weeks for governance votes. Memecoins, RWAs, and long-tail assets can't get perps markets. Traders miss opportunities.</p>
+      <p>Drift, Jupiter, Zeta — all require governance or team approval to list new markets. Memecoins, RWAs, and long-tail assets can't get perps. Traders miss opportunities.</p>
     </div>
     <div class="card">
       <h3>Liquidity Cold Start</h3>
-      <p>New markets launch with zero depth. Market makers won't quote until volume exists. Volume won't come without depth. Chicken-and-egg.</p>
+      <p>New markets launch with zero depth. Market makers won't quote until volume exists. Volume won't come without depth. HIP-3 has this same problem.</p>
     </div>
     <div class="card">
-      <h3>Centralized Control</h3>
-      <p>Teams decide which markets exist. Fee parameters are top-down. Creators who identify demand can't capture value from it.</p>
+      <h3>HL is Walled Off</h3>
+      <p>HIP-3 is great but requires $1M+ stake and custom oracle infra. Only well-funded teams can deploy. The long tail stays unserved.</p>
     </div>
     <div class="card">
-      <h3>Fragmented Liquidity</h3>
-      <p>Each perps protocol is a silo. Traders choose platforms, not markets. Capital efficiency suffers across the ecosystem.</p>
+      <h3>Wrong Chain</h3>
+      <p>Solana has the most memecoin / long-tail activity in crypto. 400ms blocks, $0.001 fees, Pyth native. The demand is here — the perps infra isn't.</p>
     </div>
   </div>
-  <div class="slide-number">02 / 12</div>
+  <div class="slide-number">03 / 14</div>
 </div>
 
-<!-- SLIDE 3: Solution -->
-<div class="slide" id="s3">
+<!-- SLIDE 4: Solution -->
+<div class="slide" id="s4">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">THE SOLUTION</span>
-  <h2>A factory for<br><span class="highlight">instant perps markets</span></h2>
-  <p class="subtitle mb-2">One transaction to create. Instant liquidity from an AMM. Anyone can do it.</p>
+  <h2>perps.factory:<br><span class="highlight">HIP-3 without the friction</span></h2>
+  <p class="subtitle mb-2">One transaction. Zero stake. Instant liquidity. On Solana.</p>
   <div class="flow-row mt-8">
-    <div class="flow-step">Pick any Pyth-fed asset</div>
+    <div class="flow-step">Pick any asset<br><span style="font-size: 12px; color: var(--muted);">Pyth feed or custom oracle</span></div>
     <span class="flow-arrow">-></span>
-    <div class="flow-step">Set leverage, fees, depth</div>
+    <div class="flow-step">Configure market<br><span style="font-size: 12px; color: var(--muted);">leverage, fees, OI caps</span></div>
     <span class="flow-arrow">-></span>
-    <div class="flow-step">Deploy in 1 tx</div>
+    <div class="flow-step">Deploy in 1 tx<br><span style="font-size: 12px; color: var(--muted);">~$0.01 cost</span></div>
     <span class="flow-arrow">-></span>
-    <div class="flow-step">Trade immediately</div>
+    <div class="flow-step">Trade immediately<br><span style="font-size: 12px; color: var(--muted);">AMM provides depth</span></div>
   </div>
-  <div class="grid-3 mt-8">
+  <div class="grid-4 mt-8">
     <div class="stat-card">
-      <div class="stat-value highlight">1</div>
-      <div class="stat-label">Transaction to launch</div>
+      <div class="stat-value highlight">$0</div>
+      <div class="stat-label">Staking required</div>
     </div>
     <div class="stat-card">
-      <div class="stat-value green">0</div>
-      <div class="stat-label">Governance votes needed</div>
+      <div class="stat-value green">1 tx</div>
+      <div class="stat-label">To launch a market</div>
     </div>
     <div class="stat-card">
       <div class="stat-value amber">100x</div>
-      <div class="stat-label">Max configurable leverage</div>
+      <div class="stat-label">Max leverage</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-value" style="color: var(--text);">Day 0</div>
+      <div class="stat-label">Liquidity available</div>
     </div>
   </div>
-  <div class="slide-number">03 / 12</div>
+  <div class="slide-number">04 / 14</div>
 </div>
 
-<!-- SLIDE 4: How it Works -->
-<div class="slide" id="s4">
+<!-- SLIDE 5: vs HIP-3 -->
+<div class="slide" id="s5">
+  <div class="logo-bar">perps.factory</div>
+  <span class="tag">HEAD-TO-HEAD</span>
+  <h2>vs Hyperliquid <span class="highlight">HIP-3</span></h2>
+  <table class="comparison-table mt-4">
+    <tr>
+      <th style="width: 30%;">Feature</th>
+      <th style="width: 35%;">HIP-3 (Hyperliquid)</th>
+      <th class="us" style="width: 35%;">perps.factory (Solana)</th>
+    </tr>
+    <tr>
+      <td>Cost to deploy</td>
+      <td class="red">500K HYPE (~$1M+)</td>
+      <td class="us green">~$0.01 (tx fee only)</td>
+    </tr>
+    <tr>
+      <td>Oracle</td>
+      <td>Deployer pushes every 3s <span class="vs-badge vs-lose">ops burden</span></td>
+      <td class="us">Pyth trustless feeds <span class="vs-badge vs-win">zero ops</span></td>
+    </tr>
+    <tr>
+      <td>Day-1 liquidity</td>
+      <td class="red">Empty book, needs MMs</td>
+      <td class="us green">AMM virtual reserves</td>
+    </tr>
+    <tr>
+      <td>Fee share</td>
+      <td>Fixed 50% to deployer</td>
+      <td class="us">Creator-configurable</td>
+    </tr>
+    <tr>
+      <td>OI caps</td>
+      <td class="green">Notional + per-asset</td>
+      <td class="us">Per-market (adding tiered)</td>
+    </tr>
+    <tr>
+      <td>Margin model</td>
+      <td class="green">Cross + isolated + strict</td>
+      <td class="us">Isolated (cross in v2)</td>
+    </tr>
+    <tr>
+      <td>Ecosystem</td>
+      <td>HL L1 only</td>
+      <td class="us green">Solana DeFi composability</td>
+    </tr>
+    <tr>
+      <td>Block time</td>
+      <td>~1s</td>
+      <td class="us green">400ms</td>
+    </tr>
+  </table>
+  <div class="slide-number">05 / 14</div>
+</div>
+
+<!-- SLIDE 6: How it Works -->
+<div class="slide" id="s6">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">HOW IT WORKS</span>
   <h2>AMM-bootstrapped<br><span class="highlight">virtual liquidity</span></h2>
@@ -373,10 +484,11 @@
       <ul class="bullet-list">
         <li>Constant-product AMM with virtual reserves</li>
         <li>No real liquidity needed at launch</li>
-        <li>Pyth oracle for index price</li>
-        <li>Direction penalty widens spread on imbalanced OI</li>
+        <li>Pyth oracle for index price, or deployer-pushed</li>
+        <li>Direction penalty widens spread on OI imbalance</li>
         <li>8-hour funding rate keeps mark ~ index</li>
         <li>Permissionless liquidation with keeper rewards</li>
+        <li>Deployer-configurable OI caps and leverage tiers</li>
       </ul>
     </div>
     <div>
@@ -389,22 +501,28 @@
           Virtual reserves determine the mark price. Trades shift the curve. Funding rate anchors it to Pyth index.
         </p>
       </div>
-      <div class="card">
+      <div class="card" style="margin-bottom: 24px;">
         <h3 class="mono" style="font-size: 16px; color: var(--green);">Direction Penalty</h3>
         <p class="mono" style="font-size: 20px; color: var(--text); margin-top: 8px;">
           spread += |OI_long - OI_short| * k
         </p>
         <p style="margin-top: 12px; font-size: 14px;">
-          When OI is imbalanced, the AMM charges more. Protects LPs from directional risk.
+          When OI is imbalanced, the AMM charges more. Protects LPs from directional risk. Inspired by HL's funding multipliers.
+        </p>
+      </div>
+      <div class="card">
+        <h3 class="mono" style="font-size: 16px; color: var(--amber);">Key Insight</h3>
+        <p style="margin-top: 8px; font-size: 14px;">
+          HIP-3 markets launch empty and need HIP-2 (Uniswap-style) bootstrapping. We bake the AMM into the perps engine itself — every market has depth from block 1.
         </p>
       </div>
     </div>
   </div>
-  <div class="slide-number">04 / 12</div>
+  <div class="slide-number">06 / 14</div>
 </div>
 
-<!-- SLIDE 5: Market Opportunity -->
-<div class="slide" id="s5">
+<!-- SLIDE 7: Market Opportunity -->
+<div class="slide" id="s7">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">MARKET OPPORTUNITY</span>
   <h2>Perps are the <span class="highlight">largest</span><br>crypto trading market</h2>
@@ -428,15 +546,16 @@
   </div>
   <div class="card mt-8">
     <p class="text-lg" style="color: var(--text);">
-      The long tail is massive and underserved. Memecoins, prediction markets, RWAs, pre-token projects, exotic pairs
-      &mdash; all have demand for leveraged exposure. Today, there's no permissionless way to spin up a perps market for them.
+      Solana is where the long-tail lives. Pump.fun, Jupiter, Raydium — millions of tokens, massive memecoin activity.
+      These traders want leveraged exposure but have no permissionless way to get it.
+      HIP-3 proved the model on HL. We bring it to where the demand actually is.
     </p>
   </div>
-  <div class="slide-number">05 / 12</div>
+  <div class="slide-number">07 / 14</div>
 </div>
 
-<!-- SLIDE 6: Competitive Landscape -->
-<div class="slide" id="s6">
+<!-- SLIDE 8: Competitive Landscape -->
+<div class="slide" id="s8">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">LANDSCAPE</span>
   <h2>Where we fit</h2>
@@ -444,66 +563,73 @@
     <tr>
       <th>Feature</th>
       <th>CEX Perps</th>
-      <th>Existing DEX Perps</th>
+      <th>Solana DEX Perps</th>
+      <th>HL HIP-3</th>
       <th class="us">perps.factory</th>
     </tr>
     <tr>
       <td>Permissionless listing</td>
       <td class="red">No</td>
-      <td class="amber">Limited</td>
-      <td class="us green">Yes</td>
+      <td class="red">No</td>
+      <td class="green">Yes ($1M+)</td>
+      <td class="us green">Yes (free)</td>
     </tr>
     <tr>
-      <td>Instant liquidity</td>
-      <td>Via MM deals</td>
-      <td class="red">Cold start problem</td>
-      <td class="us green">AMM-bootstrapped</td>
+      <td>Day-1 liquidity</td>
+      <td>MM deals</td>
+      <td class="red">Cold start</td>
+      <td class="red">Empty book</td>
+      <td class="us green">AMM depth</td>
     </tr>
     <tr>
-      <td>Custom parameters</td>
-      <td class="red">No</td>
-      <td class="red">No</td>
-      <td class="us green">Creator sets all</td>
+      <td>Oracle ops</td>
+      <td>Internal</td>
+      <td>Pyth</td>
+      <td class="amber">Deployer-run</td>
+      <td class="us green">Pyth (trustless)</td>
     </tr>
     <tr>
       <td>Creator economics</td>
       <td class="red">None</td>
       <td class="red">None</td>
-      <td class="us green">Fee share</td>
-    </tr>
-    <tr>
-      <td>Settlement</td>
-      <td>Custodial</td>
-      <td>On-chain</td>
-      <td class="us">On-chain (Solana)</td>
+      <td class="green">50% fees</td>
+      <td class="us green">Configurable</td>
     </tr>
     <tr>
       <td>Long-tail assets</td>
-      <td class="red">~100 pairs</td>
-      <td class="amber">~200 pairs</td>
+      <td class="red">~100</td>
+      <td class="amber">~200</td>
+      <td class="green">Unlimited*</td>
       <td class="us green">Unlimited</td>
     </tr>
+    <tr>
+      <td>Tx cost</td>
+      <td>Free</td>
+      <td>$0.001</td>
+      <td>$0.01</td>
+      <td class="us">$0.001</td>
+    </tr>
   </table>
-  <div class="slide-number">06 / 12</div>
+  <div class="slide-number">08 / 14</div>
 </div>
 
-<!-- SLIDE 7: Architecture -->
-<div class="slide" id="s7">
+<!-- SLIDE 9: Architecture -->
+<div class="slide" id="s9">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">ARCHITECTURE</span>
   <h2>Fully on-chain,<br><span class="highlight">Anchor-native</span></h2>
   <div class="grid-3">
     <div class="card">
       <h3 class="mono" style="color: var(--accent);">On-Chain Program</h3>
-      <p>Anchor/Rust smart contract on Solana. 8 instructions covering the full perps lifecycle: create, trade, close, liquidate, fund, LP in/out.</p>
+      <p>Anchor/Rust on Solana. 8 instructions: create, trade, close, liquidate, fund, LP in/out. Deployed on devnet.</p>
     </div>
     <div class="card">
       <h3 class="mono" style="color: var(--green);">AMM Engine</h3>
-      <p>Constant-product with virtual reserves. Direction penalty protects LPs. Mark price derived from AMM state. Funding rate anchored to Pyth.</p>
+      <p>Constant-product with virtual reserves. Direction penalty protects LPs. Mark from AMM, index from Pyth. Funding anchors the two.</p>
     </div>
     <div class="card">
-      <h3 class="mono" style="color: var(--amber);">Trading Frontend</h3>
-      <p>Next.js 16 app with Solana wallet adapter. Market browser, one-click market creation, trade panel with leverage calc. Live on Vercel.</p>
+      <h3 class="mono" style="color: var(--amber);">Builder Toolkit</h3>
+      <p>Frontend on Vercel. TS SDK (planned). Deployer dashboard for oracle config, OI caps, leverage tiers, halt/settle controls.</p>
     </div>
   </div>
   <div class="card mt-8" style="font-family: 'JetBrains Mono', monospace; font-size: 14px; line-height: 2; color: var(--muted);">
@@ -513,59 +639,59 @@
     &nbsp;&nbsp;amm/ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--green);">pricing, trade execution, PnL settlement, funding math</span><br>
     &nbsp;&nbsp;state.rs &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: var(--amber);">Protocol, Market, Position, LpPosition</span>
   </div>
-  <div class="slide-number">07 / 12</div>
+  <div class="slide-number">09 / 14</div>
 </div>
 
-<!-- SLIDE 8: Business Model -->
-<div class="slide" id="s8">
+<!-- SLIDE 10: Business Model -->
+<div class="slide" id="s10">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">BUSINESS MODEL</span>
   <h2>Three-way<br><span class="highlight">fee split</span></h2>
   <div class="grid-3 mt-4">
     <div class="stat-card" style="border-color: var(--accent);">
       <div class="stat-value highlight">Protocol</div>
-      <div class="stat-label" style="font-size: 24px; margin-top: 12px; color: var(--text);">0.05%</div>
+      <div class="stat-label" style="font-size: 24px; margin-top: 12px; color: var(--text);">Fixed %</div>
       <p class="text-sm mt-4" style="color: var(--muted); text-transform: none; letter-spacing: normal;">
-        Every trade across every market. Scales with total protocol volume. Goes to treasury.
+        Every trade, every market. Like HL's protocol fee — scales with total volume. Goes to treasury.
       </p>
     </div>
     <div class="stat-card" style="border-color: var(--green);">
-      <div class="stat-value green">Creator</div>
+      <div class="stat-value green">Builder</div>
       <div class="stat-label" style="font-size: 24px; margin-top: 12px; color: var(--text);">Configurable</div>
       <p class="text-sm mt-4" style="color: var(--muted); text-transform: none; letter-spacing: normal;">
-        Market creators set and earn trading fees. Incentivizes creation of popular markets.
+        Market deployers earn fees on every trade. Like HIP-3's 50% share, but tunable. Incentivizes market creation.
       </p>
     </div>
     <div class="stat-card" style="border-color: var(--amber);">
       <div class="stat-value amber">LPs</div>
       <div class="stat-label" style="font-size: 24px; margin-top: 12px; color: var(--text);">Spread + Fees</div>
       <p class="text-sm mt-4" style="color: var(--muted); text-transform: none; letter-spacing: normal;">
-        LPs earn from AMM spread and fee share. Direction penalty reduces adverse selection.
+        LPs earn from AMM spread. Direction penalty reduces adverse selection. Like HL's HLP but per-market.
       </p>
     </div>
   </div>
   <div class="card mt-8">
     <p class="text-lg" style="color: var(--text);">
-      <strong>Flywheel:</strong> More markets -> more trading volume -> more fees -> attracts more LPs and creators -> deeper markets -> more traders
+      <strong>Flywheel:</strong> Builders create markets (free) -> AMM provides instant depth -> traders arrive -> fees flow to builders + LPs -> more builders deploy
     </p>
   </div>
-  <div class="slide-number">08 / 12</div>
+  <div class="slide-number">10 / 14</div>
 </div>
 
-<!-- SLIDE 9: Why Solana -->
-<div class="slide" id="s9">
+<!-- SLIDE 11: Why Solana -->
+<div class="slide" id="s11">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">WHY SOLANA</span>
-  <h2>Built for <span class="highlight">speed</span></h2>
+  <h2>The demand is <span class="highlight">already here</span></h2>
   <div class="grid-2">
     <div>
       <ul class="bullet-list">
-        <li>400ms block times — real-time trading UX</li>
-        <li>~$0.001 per transaction — viable for high-frequency</li>
-        <li>Pyth Network native — sub-second oracle updates</li>
-        <li>Largest DeFi ecosystem after Ethereum</li>
+        <li>400ms blocks — faster than HL's ~1s</li>
+        <li>$0.001/tx — 10x cheaper than HL</li>
+        <li>Pyth native — 600+ feeds, no deployer oracle ops</li>
+        <li>Pump.fun launched 8M+ tokens — perps demand exists</li>
+        <li>Jupiter, Drift, Raydium — deep composability</li>
         <li>Anchor framework — battle-tested, auditable</li>
-        <li>Massive memecoin/long-tail activity already on Solana</li>
       </ul>
     </div>
     <div>
@@ -574,8 +700,8 @@
         <div class="stat-label">Block time</div>
       </div>
       <div class="stat-card" style="margin-bottom: 24px;">
-        <div class="stat-value highlight">$0.001</div>
-        <div class="stat-label">Per transaction</div>
+        <div class="stat-value highlight">8M+</div>
+        <div class="stat-label">Tokens on Solana (pump.fun)</div>
       </div>
       <div class="stat-card">
         <div class="stat-value amber">600+</div>
@@ -583,77 +709,77 @@
       </div>
     </div>
   </div>
-  <div class="slide-number">09 / 12</div>
+  <div class="slide-number">11 / 14</div>
 </div>
 
-<!-- SLIDE 10: Traction -->
-<div class="slide" id="s10">
+<!-- SLIDE 12: Traction -->
+<div class="slide" id="s12">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">STATUS</span>
   <h2>What's built</h2>
   <div class="grid-2">
     <div>
       <div class="card" style="margin-bottom: 24px;">
-        <h3 class="green">Completed</h3>
+        <h3 class="green">Shipped</h3>
         <ul class="bullet-list" style="font-size: 16px; line-height: 2.2;">
-          <li>On-chain program — compiles, 8 instructions</li>
+          <li>On-chain program — 8 instructions, deployed devnet</li>
           <li>AMM engine with direction penalty</li>
           <li>Full test suite — 10/10 passing</li>
+          <li>Devnet simulation: create, trade, price impact</li>
           <li>Trading frontend — live on Vercel</li>
-          <li>Wallet integration (Phantom)</li>
-          <li>Market creation + trading UI wired</li>
+          <li>Wallet integration + tx wiring</li>
           <li>Open source on GitHub</li>
         </ul>
       </div>
     </div>
     <div>
       <div class="card" style="margin-bottom: 24px;">
-        <h3 class="amber">Next Up</h3>
+        <h3 class="amber">HIP-3 Features Roadmap</h3>
         <ul class="bullet-list" style="font-size: 16px; line-height: 2.2;">
-          <li>Devnet deployment + live testing</li>
-          <li>Pyth price feed validation</li>
-          <li>TWAP funding rate with caps</li>
-          <li>TypeScript SDK for integrators</li>
-          <li>Market-making bot</li>
-          <li>Security audit</li>
-          <li>Mainnet launch</li>
+          <li>Deployer oracle mode (Pyth + custom push)</li>
+          <li>Tiered OI caps (notional + per-asset)</li>
+          <li>Market halt / settle controls</li>
+          <li>Sub-deployer delegation</li>
+          <li>Cross-margin mode</li>
+          <li>Builder SDK + dashboard</li>
+          <li>Security audit -> mainnet</li>
         </ul>
       </div>
     </div>
   </div>
-  <div class="slide-number">10 / 12</div>
+  <div class="slide-number">12 / 14</div>
 </div>
 
-<!-- SLIDE 11: Vision -->
-<div class="slide" id="s11">
+<!-- SLIDE 13: Vision -->
+<div class="slide" id="s13">
   <div class="logo-bar">perps.factory</div>
   <span class="tag">VISION</span>
-  <h2>The <span class="highlight">Uniswap</span> for perps</h2>
+  <h2>HIP-3 proved the model.<br>We <span class="highlight">democratize</span> it.</h2>
   <p class="subtitle">
-    Uniswap made it trivial to create a spot market. We do the same for perpetual futures.
-    Any asset with a price feed gets a tradeable perps market in one click.
+    Hyperliquid showed that builder-deployed perps work. We remove the barriers:
+    no staking, no oracle ops, instant liquidity, on the chain where the long-tail lives.
   </p>
   <div class="grid-3 mt-8">
     <div class="card">
-      <h3>Phase 1</h3>
-      <p><strong class="highlight">Launch</strong><br>Devnet -> mainnet. Core trading. Initial markets for top Solana assets + memecoins.</p>
+      <h3>Phase 1: Launch</h3>
+      <p><strong class="highlight">Now</strong><br>Devnet live. Core perps lifecycle working. Adopt HIP-3 deployer controls (OI caps, halt, tiers). Mainnet launch.</p>
     </div>
     <div class="card">
-      <h3>Phase 2</h3>
-      <p><strong class="green">Growth</strong><br>SDK + API for integrators. Bot framework. Cross-margin. Market creator dashboard.</p>
+      <h3>Phase 2: Builders</h3>
+      <p><strong class="green">Q3</strong><br>Builder SDK. Deployer dashboard. Bot framework for MM. Custom oracle mode for assets without Pyth feeds.</p>
     </div>
     <div class="card">
-      <h3>Phase 3</h3>
-      <p><strong class="amber">Scale</strong><br>Multi-collateral. Structured products. Institutional LP vaults. Cross-chain expansion.</p>
+      <h3>Phase 3: Scale</h3>
+      <p><strong class="amber">Q4+</strong><br>Cross-margin. Multi-collateral. Vault strategies (HL's HLP model). CLOB hybrid for high-volume markets.</p>
     </div>
   </div>
-  <div class="slide-number">11 / 12</div>
+  <div class="slide-number">13 / 14</div>
 </div>
 
-<!-- SLIDE 12: CTA -->
-<div class="slide" id="s12">
+<!-- SLIDE 14: CTA -->
+<div class="slide" id="s14">
   <div class="logo-bar">perps.factory</div>
-  <h1>Let's build the<br>future of <span class="highlight">perps</span></h1>
+  <h1>HIP-3 for <span class="highlight">Solana</span>.<br>Zero friction.</h1>
   <div class="cta-box">
     <div class="grid-3">
       <div>
@@ -665,24 +791,25 @@
         <p class="text-lg mt-4">app-zeta-pearl-55.vercel.app</p>
       </div>
       <div>
-        <p class="mono text-sm" style="color: var(--accent);">CONTACT</p>
-        <p class="text-lg mt-4">Yash Agarwal</p>
+        <p class="mono text-sm" style="color: var(--accent);">DEVNET PROGRAM</p>
+        <p class="text-lg mt-4 mono" style="font-size: 14px;">FtQtY9Qp...wzCC</p>
       </div>
     </div>
   </div>
   <div class="mt-8" style="display: flex; gap: 12px;">
     <span class="tag">Open Source</span>
     <span class="tag">Built on Solana</span>
-    <span class="tag">Ship Fast</span>
+    <span class="tag">Deployed on Devnet</span>
+    <span class="tag">Inspired by HIP-3</span>
   </div>
-  <div class="slide-number">12 / 12</div>
+  <div class="slide-number">14 / 14</div>
 </div>
 
 <div class="nav-hint">arrow keys to navigate</div>
 
 <script>
   let current = 1;
-  const total = 12;
+  const total = 14;
 
   function showSlide(n) {
     document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
@@ -700,7 +827,6 @@
     }
   });
 
-  // Touch support
   let touchStartX = 0;
   document.addEventListener('touchstart', (e) => { touchStartX = e.touches[0].clientX; });
   document.addEventListener('touchend', (e) => {
